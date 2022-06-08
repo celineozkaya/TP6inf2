@@ -74,3 +74,25 @@ for i in range(len(data)):
 
 
 connexion.commit()
+
+#Partie 3
+
+nom = input("Entrer le nom du logeur : ")
+prenom = input("Entrer le prénom du logeur : ")
+curseur.execute(f"SELECT id_logeur FROM logeur WHERE nom='{nom.lower()}' AND prenom='{prenom.lower()}'")
+id_logr=curseur.fetchall()
+#print(id_logr)
+curseur.execute(f"SELECT type_l, label, numero_rue, rue, code_postal, ville, id_logement FROM logement WHERE id_logeur={id_logr[0][0]}")
+result_logement=curseur.fetchall()
+#print(result_logement)
+
+
+print(f"Nom du logeur : {nom} {prenom}")
+i=0
+for k in result_logement :
+    i+=1
+    print(f"Logement {i} : {k[2]} rue {k[3]}, {k[4]} {k[5]}, {int(k[1])*'*'} {k[0]}")
+    curseur.execute(f"SELECT nom, prenom FROM etudiant WHERE id_logement={k[6]}")
+    result_etudiant = curseur.fetchall()
+    for i in result_etudiant:
+        print(f"Nom de l'étudiant : {i[0]} {i[1]}")
