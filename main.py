@@ -74,3 +74,7 @@ for i in range(len(data)):
 
 
 connexion.commit()
+
+
+
+https://code-with-me.global.jetbrains.com/nFTeMK2rj9uNHeax3gp9rQ#p=PY&fp=1D562CDE91F22D901B6F61E5E0861134AA6075F306911A1CF0FC2676E5A80297
