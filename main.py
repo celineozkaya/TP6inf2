@@ -8,7 +8,7 @@ curseur = connexion.cursor()
 r1 = "CREATE TABLE IF NOT EXISTS etudiant (id_etu INTEGER constraint etudiant_pk primary key autoincrement, id_logement INTEGER references logement,  nom TEXT, prenom TEXT, semestre TEXT)"
 curseur.execute(r1)
 
-r2 = "CREATE TABLE IF NOT EXISTS logement (id_logement INTEGER constraint logement_pk primary key autoincrement, type_l TEXT, label INTEGER, numero_rue INTEGER, rue TEXT, code_postal INTEGER, ville TEXT, id_type_logement INTEGER references type_logement, id_logeur INTEGER references logeur)"
+r2 = "CREATE TABLE IF NOT EXISTS logement (id_logement INTEGER constraint logement_pk primary key autoincrement, type_l TEXT, label INTEGER, numero_rue INTEGER, rue TEXT, code_postal INTEGER, ville TEXT, id_type_logement INTEGER references type_logement, id_logeur INTEGER references logeur, UNIQUE(numero_rue, rue))"
 curseur.execute(r2)
 
 r3 = "CREATE TABLE IF NOT EXISTS logeur (id_logeur INTEGER constraint logeur_pk primary key autoincrement, nom TEXT, prenom TEXT, numero_rue INTEGER, rue TEXT, code_postal INTEGER, ville TEXT, UNIQUE(nom, prenom))"
@@ -28,6 +28,7 @@ for i in range(len(data)):
 # Remplissage de la table des logements
 data = pd.read_excel("logements.xlsx")
 
+# Remplissage de la table des types
 for j in range(len(data)):
     typ = (data.type_logement[j],)
     #print(f' type : {typ}')
@@ -37,6 +38,8 @@ for j in range(len(data)):
    # result_typ = curseur.fetchall()
     #print(result_typ)
 
+
+#les logements
 for i in range(len(data)):
     typ = data.type_logement[i]
     print(f' type : {typ}')
@@ -46,8 +49,6 @@ for i in range(len(data)):
     curseur.execute(f'SELECT id_type from type_logement where type_l="{typ}"')
     result_typ = curseur.fetchall()
     #print(f' resultat id type : {result_typ}')
-
-
 
     logm = (data.type_logement[i], int(data.label[i]), int(data.numero_rue[i]), data.nom_rue[i], int(data.code_postal[i]),
     data.ville[i])
@@ -60,5 +61,16 @@ for i in range(len(data)):
 
     curseur.execute(f'INSERT or Ignore INTO logement(type_l, label, numero_rue, rue, code_postal, ville, id_type_logement, id_logeur) VALUES (?,?, ?, ?, ?,?, {result_typ[0][0]}, {result_logeur[0][0]})',logm)
 
-connexion.commit()
 
+
+# Remplissage de la table etudiant
+data = pd.read_excel("etudiants.xlsx")
+for i in range(len(data)):
+    etu = (data.nom[i], data.prenom[i], data.semestre[i])
+    r_logement = f'SELECT id_logement from logement where numero_rue = {int(data.numero_rue[i])} and rue= "{data.nom_rue[i]}" and code_postal = {int(data.code_postal[i])} and ville = "{data.ville[i]}"'
+    curseur.execute(r_logement)
+    result_logement = curseur.fetchall()
+    curseur.execute(f'INSERT or Ignore INTO etudiant(id_logement, nom, prenom, semestre) VALUES ({result_logement[0][0]}, ?,?, ?)',etu)
+
+
+connexion.commit()
