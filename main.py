@@ -133,7 +133,7 @@ class Fenetre(Tk):
 
 
         #Bouton effacer
-        Button(frame, relief=RAISED, borderwidth=10, text="Effacer", bg='green', command=lambda: self.effacer()).grid(column=0, row=9, padx=10, pady=10)
+        Button(frame, relief=RAISED, borderwidth=10, text="Effacer", bg='green', command=lambda: self.empty()).grid(column=0, row=9, padx=10, pady=10)
 
         # Bouton quitter
         Button(frame, relief=RAISED, borderwidth=10, text="Quitter", bg='green', command=lambda: self.destroy()).grid(column=1, row=9, padx=10, pady=10)
@@ -142,9 +142,10 @@ class Fenetre(Tk):
         Button(frame, relief=RAISED, borderwidth=10, text="Valider", bg='green', command=lambda: self.destroy()).grid(column=2, row=9, padx=10, pady=10)
 
 
-    # fonction qui efface le contenu de l'ecran
-    def effacer(self):
-        self.entry.delete(0, END)
+   # fonction qui efface le contenu de l'ecran
+    def empty(self):
+        self.prenom.set('')
+        self.nom.set('')
 
     # affiche le resultat de la requete
     def resultat(self):
