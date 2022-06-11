@@ -2,13 +2,13 @@ import sqlite3
 import pandas as pd
 from tkinter import *
 
-#Partie 1
+# Partie 1
 
 connexion = sqlite3.connect("alesc.sqlite")
 curseur = connexion.cursor()
 
 # Creation de la table etudiant si elle n'existe pas encore
-r1 = "CREATE TABLE IF NOT EXISTS etudiant (id_etu INTEGER constraint etudiant_pk primary key autoincrement, id_logement INTEGER references logement,  nom TEXT, prenom TEXT, semestre TEXT)"
+r1 = "CREATE TABLE IF NOT EXISTS etudiant (id_etu INTEGER constraint etudiant_pk primary key autoincrement, id_logement INTEGER references logement,  nom TEXT, prenom TEXT, semestre TEXT, UNIQUE(nom, prenom))"
 curseur.execute(r1)
 
 # Creation de la table logement si elle n'existe pas encore
@@ -44,7 +44,6 @@ for j in range(len(data)):
 # les logements
 for i in range(len(data)):
     typ = data.type_logement[i]
-    print(f' type : {typ}')
     # on cherche l'id du type du logement
     curseur.execute(f'SELECT id_type from type_logement where type_l="{typ}"')
     result_typ = curseur.fetchall()
@@ -70,35 +69,39 @@ for i in range(len(data)):
     result_logement = curseur.fetchall()
     curseur.execute(f'INSERT or Ignore INTO etudiant(id_logement, nom, prenom, semestre) VALUES ({result_logement[0][0]}, ?,?, ?)',etu)
 
-
 connexion.commit()
+curseur.close()
+connexion.close()
+
+
+
 
 # Partie 3
 """
+
 nom = input("Entrez le nom du logeur : ")
 prenom = input("Entrez le prénom du logeur : ")
-curseur.execute(f"SELECT id_logeur FROM logeur WHERE nom='{nom.lower()}' AND prenom='{prenom.lower()}'")
-id_logr = curseur.fetchall()
-# print(id_logr)
-curseur.execute(
-    f"SELECT type_l, label, numero_rue, rue, code_postal, ville, id_logement FROM logement WHERE id_logeur={id_logr[0][0]}")
-result_logement = curseur.fetchall()
-# print(result_logement)
 
-
-print(f"Nom du logeur : {nom} {prenom}")
-i = 0
-for k in result_logement:
-    i += 1
-    print(f"Logement {i} : {k[2]} rue {k[3]}, {k[4]} {k[5]}, {int(k[1]) * '*'} {k[0]}")
-    curseur.execute(f"SELECT nom, prenom FROM etudiant WHERE id_logement={k[6]}")
-    result_etudiant = curseur.fetchall()
-    for i in result_etudiant:
-        print(f"Nom de l'étudiant : {i[0]} {i[1]}")
+def resultat_logement(nom, prenom):
+    curseur.execute(f"SELECT id_logeur FROM logeur WHERE nom='{nom.lower()}' AND prenom='{prenom.lower()}'")
+    id_logr = curseur.fetchall()
+    #print(id_logr)
+    curseur.execute(f"SELECT type_l, label, numero_rue, rue, code_postal, ville, id_logement FROM logement WHERE id_logeur={id_logr[0][0]}")
+    result_logement = curseur.fetchall()
+    #print(result_logement)
+    print(f"Nom du logeur : {nom} {prenom}")
+    i = 0
+    for k in result_logement:
+        i+=1
+        print(f"Logement {i} : {k[2]} rue {k[3]}, {k[4]} {k[5]}, {int(k[1]) * '*'} {k[0]}")
+        curseur.execute(f"SELECT nom, prenom FROM etudiant WHERE id_logement={k[6]}")
+        result_etudiant = curseur.fetchall()
+        for j in result_etudiant:
+            print(f"Nom de l'étudiant : {j[0]} {j[1]}")
+    return result_logement, result_etudiant
 """
 
-
-# Partie 3 app
+# Partie 3 appli
 
 class Fenetre(Tk):
     def __init__(self, title, height=1000, width=1000):
@@ -107,62 +110,115 @@ class Fenetre(Tk):
         self.title(title)
         self.geometry(f"{width}x{height}")
 
-        frame = Frame(self)
-        frame.grid()  # Placer le frame dans la fenêtre principale
 
         self.nom = StringVar()
         self.prenom = StringVar()
 
+
+        frame = Frame(self)
+        frame.grid()  # Placer le frame dans la fenêtre principale
+        self.frame2 = Frame(self)
+        self.frame2.grid()
         # Ligne 1 -> 'alesc'
-        Label(frame, text="ALESC :").grid(column=1, row=0, padx=10, pady=10, columnspan=2, sticky='ew')
+        Label(frame, text="ALESC :").grid(column=1, row=0, padx=10, pady=10, columnspan=2, sticky='e')
 
-        # Ligne 2 -> Label 'Nom du logeur'
-        Label(frame, text="Nom du logeur :", bg='yellow').grid(column=0, row=2, padx=10, pady=10, sticky='w')
+        # Ligne 2, 3 -> Label 'Nom du logeur' + Entry
+        Label(frame, text="Nom du logeur :", bg='yellow').grid(column=0, row=2, padx=10, pady=10, sticky='e')
+        Entry(frame, textvariable=self.nom).grid(column=2, row=2, padx=10, pady=10)
 
-        # Ligne 3 -> Label 'Prénom du logeur'
-        Label(frame, text="Prénom du logeur :", bg='yellow').grid(column=0, row=3, padx=10, pady=10, sticky='w')
+        # Ligne 4,5 -> Label 'Prénom du logeur' + Entry
+        Label(frame, text="Prénom du logeur :", bg='yellow').grid(column=0, row=3, padx=10, pady=10, sticky='e')
+        Entry(frame, textvariable=self.prenom).grid(column=2, row=3, padx=10, pady=10)
 
-        # Ligne 2 -> Entrée du nom
-        self.entry = Entry(frame, textvariable=self.nom).grid(column=2, row=2, padx=10, pady=10, sticky='e')
-
-        # Ligne 3 -> Entrée du prenom
-        self.entry = Entry(frame, textvariable=self.prenom).grid(column=2, row=3, padx=10, pady=10, sticky='e')
-
-
-
-
+        # Bouton valider
+        Button(frame, relief=RAISED, borderwidth=10, text="Valider", bg='green', command=lambda : self.requete()).grid(column=2,row=4,padx=10,pady=10)
 
         #Bouton effacer
-        Button(frame, relief=RAISED, borderwidth=10, text="Effacer", bg='green', command=lambda: self.empty()).grid(column=0, row=9, padx=10, pady=10)
+        Button(frame, relief=RAISED, borderwidth=10, text="Effacer", bg='green', command=lambda :self.empty()).grid(column=0, row=4, padx=10, pady=10)
 
         # Bouton quitter
-        Button(frame, relief=RAISED, borderwidth=10, text="Quitter", bg='green', command=lambda: self.destroy()).grid(column=1, row=9, padx=10, pady=10)
-
-        #Bouton valider
-        Button(frame, relief=RAISED, borderwidth=10, text="Valider", bg='green', command=lambda: self.destroy()).grid(column=2, row=9, padx=10, pady=10)
+        Button(frame, relief=RAISED, borderwidth=10, text="Quitter", bg='green', command=lambda :self.destroy()).grid(column=1, row=4, padx=10, pady=10)
 
 
-   # fonction qui efface le contenu de l'ecran
+
+    # fonction qui efface le contenu de l'ecran
     def empty(self):
         self.prenom.set('')
         self.nom.set('')
+        for label in self.frame2.winfo_children():
+            label.grid_forget()
 
-    # affiche le resultat de la requete
-    def resultat(self):
-        try :
 
-            # effectuer la requete
 
-            # exceptions
-            return resultat
+    def resultat_logement(self):
+        connexion = sqlite3.connect("alesc.sqlite")
+        curseur = connexion.cursor()
 
-        #gestion des exceptions
-        except Exception:
-            self.effacer()
-            # afficher l'erreur
+        for label in self.frame2.winfo_children():
+            label.grid_forget()
+
+        nom = self.nom.get()
+        prenom = self.prenom.get()
+
+        curseur.execute(f"SELECT id_logeur FROM logeur WHERE nom='{nom.lower()}' AND prenom='{prenom.lower()}'")
+        id_logr = curseur.fetchall()
+        # print(id_logr)
+
+
+        curseur.execute(
+            f"SELECT type_l, label, numero_rue, rue, code_postal, ville, id_logement FROM logement WHERE id_logeur={id_logr[0][0]}")
+
+        result_logement = curseur.fetchall()
+        result_etudiant_total =[]
+
+        if len(result_logement)>0 :
+            # print(result_logement)
+            print(f"Nom du logeur : {nom} {prenom}")
+            i = 0
+            for k in result_logement:
+                i += 1
+                print(f"Logement {i} : {k[2]} rue {k[3]}, {k[4]} {k[5]}, {int(k[1]) * '*'} {k[0]}")
+                curseur.execute(f"SELECT nom, prenom FROM etudiant WHERE id_logement={k[6]}")
+                result_etudiant = curseur.fetchall()
+                result_etudiant_total.append(result_etudiant)
+
+                for j in result_etudiant:
+                    print(f"Nom de l'étudiant : {j[0]} {j[1]}")
+            connexion.commit()
+            curseur.close()
+            connexion.close()
+            print(result_etudiant)
+            print(result_etudiant_total)
+            return result_logement, result_etudiant_total
+        else :
+            return 0,0
+    # requete -->  quand on clique sur valider on mets le tableau de resultat de la requete dans self.logement
+    def requete(self):
+
+        Label(self.frame2, text=f"Nom du logeur : {self.nom.get()} {self.prenom.get()}").grid(column=0, row=5, padx=10, pady=10, sticky = 'w')
+        result_logement, result_etudiant = self.resultat_logement()
+        if((result_logement, result_etudiant) != (0,0)):
+            i = 1
+            for k in result_logement:
+                Label(self.frame2, text=f"Logement n°{i}:", bg='red').grid(column=0, row= 6+i*4 , padx=10, pady=10, sticky = 'w')
+
+                Label(self.frame2, text=f"{k[2]} rue {k[3]}, {k[4]} {k[5]}, {int(k[1]) * '*'} {k[0]}").grid(column=0, row=7 + i * 4,padx=10, pady=10, sticky = 'w')
+
+
+                for j in result_etudiant:
+                    for n in range(len(j)):
+                        Label(self.frame2, text=f"Nom de l'étudiant : {j[n]} ", bg='white').grid(column=0, row=8+n*4, padx=10, pady=10, sticky = 'w')
+                i+=1
+
+
+
+
+
+        else :
+            Label(self.frame2, text=f"Aucun logement n'a été enregistré pour ce logeur").grid(column=0, row=12 , padx=10, pady=10,
+                                                                        sticky='w')
 
 
 if __name__ == "__main__":
     f = Fenetre("TP6")
     f.mainloop()
-
